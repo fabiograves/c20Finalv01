@@ -2,6 +2,7 @@ package com.medidor.c20btv1
 
 import androidx.appcompat.app.AppCompatActivity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
@@ -26,6 +27,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private var bluetoothSocket: BluetoothSocket? = null
     private val REQUEST_BLUETOOTH_PERMISSIONS = 1
+    private lateinit var buttonConectarBt: Button
+    private lateinit var textViewLog: TextView
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,9 +37,10 @@ class MainActivity : AppCompatActivity() {
 
         // ###################### VARIAVEIS ###########################
         // Obtém as variaveis
-        val textViewLog = findViewById<TextView>(R.id.textViewLog)
+        textViewLog = findViewById<TextView>(R.id.textViewLog)
+        textViewLog.maxLines = 1
         // Obtém o botão buttonConectarBt
-        val buttonConectarBt = findViewById<Button>(R.id.buttonConectarBt)
+        buttonConectarBt = findViewById<Button>(R.id.buttonConectarBt)
 
         // Inicialize as vistas
         textViewPesoBt = findViewById(R.id.textViewPesoBt)
@@ -68,6 +72,7 @@ class MainActivity : AppCompatActivity() {
         // ############################ /TEXT LOG #############################
 
         // ##################### BLUETOOTH ###############################
+
         // Verifique as permissões e inicie o Bluetooth
         checkAndInitializeBluetooth()
 
@@ -81,18 +86,6 @@ class MainActivity : AppCompatActivity() {
         // Obtém a lista de dispositivos pareados
         val devices = BluetoothAdapter.getDefaultAdapter().getBondedDevices()
 
-        // Função para desconectar o Bluetooth
-        fun desconectarBluetooth() {
-            // Desconecta o BluetoothSocket
-            bluetoothSocket?.close()
-
-            // Altera o texto do botão buttonConectarBt para Conectar
-            buttonConectarBt.text = "Conectar"
-
-
-            // Atualiza o texto do textViewLog
-            atualizarLog("Desconectado")
-        }
 
         // ##################### /BLUETOOTH ###############################
 
@@ -119,66 +112,8 @@ class MainActivity : AppCompatActivity() {
             // Obtém o item selecionado no spinner
             val itemSelecionado = findViewById<Spinner>(R.id.spinnerBt).selectedItem as String
 
-            // Obtém o objeto BluetoothDevice correspondente ao item selecionado no spinner
-            val dispositivoSelecionado = devices.find { it.name == itemSelecionado }
-
-            // Verifica se o bluetoothSocket existe e está conectado antes de tentar conectar novamente
-            if (bluetoothSocket == null || !bluetoothSocket!!.isConnected) {
-                // O Bluetooth não está conectado, conecta ao dispositivo selecionado
-                // Use um operador safe call para verificar se dispositivoSelecionado é nulo
-                bluetoothSocket = dispositivoSelecionado?.createRfcommSocketToServiceRecord(
-                    UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-                )
-
-                try {
-                    bluetoothSocket!!.connect()
-
-                    // Inicia uma thread para receber os dados do Bluetooth
-                    Thread {
-                        val inputStream = bluetoothSocket!!.inputStream
-                        val buffer = ByteArray(1024)
-                        val valoresRecebidos = mutableListOf<String>()
-
-                        while (true) {
-                            try {
-                                val bytes = inputStream.read(buffer)
-                                val data = String(buffer, 0, bytes).trim()
-                                val dataWithoutDot = data.trimEnd('.')
-
-                                valoresRecebidos.add(dataWithoutDot)
-                                if (valoresRecebidos.size > 30) {
-                                    valoresRecebidos.removeAt(0)
-                                }
-
-                                val valorMaisFrequente =
-                                    valoresRecebidos.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
-
-                                // Atualiza o texto do textViewPesoBt com um delay de 1 segundo
-                                runOnUiThread {
-                                    textViewPesoBt.text = valorMaisFrequente ?: ""
-                                }
-
-                                // Adiciona um delay de 1 segundo
-                                //Thread.sleep(1000)
-                            } catch (e: IOException) {
-                                e.printStackTrace()
-                            }
-                        }
-                    }.start()
-
-                    // Altera o texto do botão buttonConectarBt para Desconectar
-                    buttonConectarBt.text = "Desconectar"
-                    // O Bluetooth está conectado, exiba o texto "Conectado ao ${itemSelecionado}"
-                    textViewLog.text = "Conectado ao ${itemSelecionado!!}"
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    // Lida com a exceção de conexão Bluetooth aqui
-                    textViewLog.text = "Não foi possível se conectar ao ${itemSelecionado!!}"
-                }
-            } else {
-                // O Bluetooth já está conectado, desconecta o Bluetooth
-                desconectarBluetooth()
-            }
+            // Chama a função conectarOuDesconectarBluetooth passando a lista de dispositivos e o item selecionado
+            conectarOuDesconectarBluetooth(devices, itemSelecionado)
         }
 
         // ######################### /BUTTON CONECTAR ######################################
@@ -186,6 +121,85 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ############################ FUNCOES BLUETOOTH ###################################
+    private fun desconectarBluetooth(){
+        try {
+            bluetoothSocket?.close()
+            buttonConectarBt.text = "Conectar" // Altere o texto do botão conforme necessário
+            textViewLog.text = "Bluetooth desconectado" // Atualize o texto do textViewLog conforme necessário
+        } catch (e: IOException) {
+            e.printStackTrace()
+            // Lida com a exceção de desconexão Bluetooth aqui
+            textViewLog.text = "Erro ao desconectar o Bluetooth"
+        }
+    }
+    private fun conectarOuDesconectarBluetooth(
+        devices: Set<BluetoothDevice>?,
+        itemSelecionado: String
+    ){
+        // Verifica se o bluetoothSocket existe e está conectado antes de tentar conectar novamente
+        if (devices == null) {
+            // devices é nulo, lide com isso conforme apropriado para o seu aplicativo
+            textViewLog.text = "Não foi encontrado nenhum dispositivo Bluetooth"
+            return
+        }
+        // Verifica se o bluetoothSocket existe e está conectado antes de tentar conectar novamente
+        if (bluetoothSocket == null || !bluetoothSocket!!.isConnected) {
+            // O Bluetooth não está conectado, conecta ao dispositivo selecionado
+            val dispositivoSelecionado = devices.find { it.name == itemSelecionado }
+
+            // Use um operador safe call para verificar se dispositivoSelecionado é nulo
+            bluetoothSocket = dispositivoSelecionado?.createRfcommSocketToServiceRecord(
+                UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+            )
+
+            try {
+                bluetoothSocket!!.connect()
+
+                // Inicia uma thread para receber os dados do Bluetooth
+                Thread {
+                    val inputStream = bluetoothSocket!!.inputStream
+                    val buffer = ByteArray(1024)
+                    val valoresRecebidos = mutableListOf<String>()
+
+                    while (true) {
+                        try {
+                            val bytes = inputStream.read(buffer)
+                            val data = String(buffer, 0, bytes).trim()
+                            val dataWithoutDot = data.trimEnd('.')
+
+                            valoresRecebidos.add(dataWithoutDot)
+                            if (valoresRecebidos.size > 30) {
+                                valoresRecebidos.removeAt(0)
+                            }
+
+                            val valorMaisFrequente =
+                                valoresRecebidos.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
+
+                            // Atualiza o texto do textViewPesoBt com um delay de 1 segundo
+                            runOnUiThread {
+                                textViewPesoBt.text = valorMaisFrequente ?: ""
+                            }
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                        }
+                    }
+                }.start()
+
+                // Altera o texto do botão buttonConectarBt para Desconectar
+                buttonConectarBt.text = "Desconectar"
+                // O Bluetooth está conectado, exiba o texto "Conectado ao ${itemSelecionado}"
+                textViewLog.text = "Conectado ao ${itemSelecionado!!}"
+            } catch (e: IOException) {
+                e.printStackTrace()
+                // Lida com a exceção de conexão Bluetooth aqui
+                textViewLog.text = "Não foi possível se conectar ao ${itemSelecionado!!}"
+            }
+        } else {
+            // O Bluetooth já está conectado, desconecta o Bluetooth
+            desconectarBluetooth()
+        }
+    }
+
     private fun checkAndInitializeBluetooth() {
         // Verifique as permissões e inicialize o Bluetooth
         if (checkBluetoothPermissions()) {
