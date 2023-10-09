@@ -49,6 +49,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:layout_marginTop="5dp"
         android:layout_marginEnd="8dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toTopOf="@+id/p11"
@@ -72,6 +73,7 @@
         android:id="@+id/p11"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toTopOf="@+id/p01"
         app:layout_constraintEnd_toEndOf="parent"
@@ -83,14 +85,17 @@
             android:layout_width="match_parent"
             android:layout_height="5dp"
             android:layout_weight="1"
-            android:background="#2d6653" />
+            android:background="#2d6653"
+            android:visibility="visible"
+            tools:visibility="visible" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/p01"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#E81717"
+        android:layout_marginTop="2dp"
+        android:background="#DEDADD"
         android:orientation="horizontal"
         app:layout_constraintBottom_toTopOf="@+id/p12"
         app:layout_constraintEnd_toEndOf="parent"
@@ -102,11 +107,10 @@
             android:id="@+id/textViewLog"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
+            android:layout_marginStart="10dp"
             android:layout_weight="1"
             android:text="Desconectado"
-            android:textColor="#FFEB3B"
-            android:textStyle="bold" />
+            android:textColor="#000000" />
 
     </LinearLayout>
 
@@ -125,7 +129,8 @@
             android:layout_width="match_parent"
             android:layout_height="5dp"
             android:layout_weight="1"
-            android:background="#2d6653" />
+            android:background="#2d6653"
+            android:visibility="gone" />
     </LinearLayout>
 
     <LinearLayout
@@ -133,7 +138,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="32dp"
         android:layout_marginEnd="8dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/p07"
@@ -154,9 +159,7 @@
         android:id="@+id/p07"
         android:layout_width="match_parent"
         android:layout_height="45dp"
-        android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="8dp"
         android:background="#DFDBDE"
         android:orientation="horizontal"
         app:layout_constraintBottom_toTopOf="@+id/p08"
@@ -168,6 +171,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_marginStart="10dp"
             android:layout_weight="2"
             android:orientation="vertical">
 
