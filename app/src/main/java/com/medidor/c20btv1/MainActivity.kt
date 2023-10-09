@@ -11,6 +11,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
         textViewLog.maxLines = 1
         // Obtém o botão buttonConectarBt
         buttonConectarBt = findViewById<Button>(R.id.buttonConectarBt)
+
 
         // Inicialize as vistas
         textViewPesoBt = findViewById(R.id.textViewPesoBt)
@@ -80,43 +82,56 @@ class MainActivity : AppCompatActivity() {
         startBluetoothDiscovery()
 
         // Inicializa o Bluetooth Manager e Adapter
-        bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        bluetoothAdapter = bluetoothManager.adapter
+        try {
+            bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+            bluetoothAdapter = bluetoothManager.adapter
 
-        // Obtém a lista de dispositivos pareados
-        val devices = BluetoothAdapter.getDefaultAdapter().getBondedDevices()
+
+            if (bluetoothAdapter == null) {
+                // Tratamento de erro, o Bluetooth não está disponível no dispositivo
+                // Você pode exibir uma mensagem de erro ao usuário ou realizar alguma outra ação apropriada aqui.
+            } else {
+                // O adaptador Bluetooth está disponível, você pode continuar com as operações Bluetooth aqui.
+
+                // Obtém a lista de dispositivos pareados
+                val devices = BluetoothAdapter.getDefaultAdapter().getBondedDevices()
+                // ############################# SPINNER #############################
+                // Cria um adaptador para o spinner
+                val adapter = ArrayAdapter(
+                    this,
+                    android.R.layout.simple_spinner_item,
+                    devices.map { it.name }
+                )
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+                // Vincula o spinner ao adaptador
+                findViewById<Spinner>(R.id.spinnerBt).adapter = adapter
+
+                // ############################ /SPINNER #############################
+
+                // ############################ BUTTON CONECTAR #######################
+
+                // Vincula o onclick ao botão
+                buttonConectarBt.setOnClickListener {
+                    // Obtém o item selecionado no spinner
+                    val itemSelecionado = findViewById<Spinner>(R.id.spinnerBt).selectedItem as String
+
+                    // Chama a função conectarOuDesconectarBluetooth passando a lista de dispositivos e o item selecionado
+                    conectarOuDesconectarBluetooth(devices, itemSelecionado)
+                }
+
+                // ######################### /BUTTON CONECTAR ######################################
+            }
+        } catch (e: NullPointerException) {
+            // Tratamento de erro, uma exceção ocorreu ao tentar obter o adaptador Bluetooth
+            // Você pode exibir uma mensagem de erro ao usuário ou realizar alguma outra ação apropriada aqui.
+        }
+
+
 
 
         // ##################### /BLUETOOTH ###############################
 
-
-        // ############################# SPINNER #############################
-        // Cria um adaptador para o spinner
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            devices.map { it.name }
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-
-        // Vincula o spinner ao adaptador
-        findViewById<Spinner>(R.id.spinnerBt).adapter = adapter
-
-        // ############################ /SPINNER #############################
-
-
-        // ############################ BUTTON CONECTAR #######################
-
-        // Vincula o onclick ao botão
-        buttonConectarBt.setOnClickListener {
-            // Obtém o item selecionado no spinner
-            val itemSelecionado = findViewById<Spinner>(R.id.spinnerBt).selectedItem as String
-
-            // Chama a função conectarOuDesconectarBluetooth passando a lista de dispositivos e o item selecionado
-            conectarOuDesconectarBluetooth(devices, itemSelecionado)
-        }
-
-        // ######################### /BUTTON CONECTAR ######################################
 
     }
 
